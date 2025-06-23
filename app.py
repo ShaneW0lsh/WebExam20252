@@ -14,15 +14,14 @@ from flask_wtf import CSRFProtect
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
+# POSTGRES_USER = os.environ.get('POSTGRES_USER', 'postgres')
+# POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'postgres')
+# POSTGRES_DB = os.environ.get('POSTGRES_DB', 'volunteers_db')
+# POSTGRES_HOST = os.environ.get('PGHOST', 'localhost')
+# POSTGRES_PORT = os.environ.get('PGPORT', '5432')
 
-# Read database config from environment variables
-POSTGRES_USER = os.environ.get('POSTGRES_USER', 'postgres')
-POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'postgres')
-POSTGRES_DB = os.environ.get('POSTGRES_DB', 'volunteers_db')
-POSTGRES_HOST = os.environ.get('PGHOST', 'localhost')
-POSTGRES_PORT = os.environ.get('PGPORT', '5432')
-
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
+# app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
