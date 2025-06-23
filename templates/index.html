@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Система поиска волонтёров{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Мероприятия</h1>
+
+{% if current_user.is_authenticated and current_user.role.name == 'administrator' %}
+<div class="mb-4">
+    <a href="{{ url_for('create_event') }}" class="btn btn-primary">Добавить мероприятие</a>
+</div>
+{% endif %}
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for event in events.items %}
+    <div class="col">
+        <div class="card h-100">
+            <img src="{{ url_for('static', filename='uploads/' + event.image_filename) }}" class="card-img-top" alt="{{ event.title }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ event.title }}</h5>
+                <p class="card-text">
+                    <small class="text-muted">
+                        Дата: {{ event.date.strftime('%d.%m.%Y') }}<br>
+                        Место: {{ event.location }}<br>
+                        Организатор: {{ event.organizer.last_name }} {{ event.organizer.first_name }}
+                    </small>
+                </p>
+                <p class="card-text">
+                    Волонтёров: {{ event.registrations|selectattr('status', 'equalto', 'accepted')|list|length }}/{{ event.volunteers_needed }}
+                </p>
+                {% if event.registrations|selectattr('status', 'equalto', 'accepted')|list|length >= event.volunteers_needed %}
+                    <div class="badge bg-secondary mb-2">Регистрация закрыта</div>
+                {% else %}
+                    <div class="badge bg-success mb-2">Идёт набор волонтёров</div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ url_for('view_event', event_id=event.id) }}" class="btn btn-primary">Просмотр</a>
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.role.name in ['administrator', 'moderator'] %}
+                            <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-warning">Редактировать</a>
+                        {% endif %}
+                        {% if current_user.role.name == 'administrator' %}
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ event.id }}">
+                                Удалить
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if current_user.is_authenticated and current_user.role.name == 'administrator' %}
+    <!-- Delete Modal -->
+    <div class="modal fade" id="deleteModal{{ event.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Удаление мероприятия</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Вы уверены, что хотите удалить мероприятие "{{ event.title }}"?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Нет</button>
+                    <form action="{{ url_for('delete_event', event_id=event.id) }}" method="POST" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger">Да</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if events.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('index', page=events.prev_num) }}">Предыдущая</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Предыдущая</span>
+            </li>
+        {% endif %}
+
+        {% for page_num in events.iter_pages(left_edge=2, left_current=2, right_current=2, right_edge=2) %}
+            {% if page_num %}
+                {% if page_num == events.page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('index', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if events.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('index', page=events.next_num) }}">Следующая</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Следующая</span>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endblock %} 
